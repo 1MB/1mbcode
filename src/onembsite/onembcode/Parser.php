@@ -43,6 +43,7 @@ class Parser {
 		$this->lexer->add('/^(((?![\ ])([a-z]+))\(([0-9a-z\,\ ])+\))/', 'T_FUNCTION_RESULT|T_VARIABLE_VALUE');
 		$this->lexer->add('/^((?![\ \=\"0-9\(\)]+)(\&)(\b(\w+(?![\(]))([\.]\w+)))/', 'T_NESTED_VARIABLE_REFERENCE|T_VARIABLE_VALUE');
 		$this->lexer->add('/^(?![\ \;\=\"0-9\(\)]+)(\&)(\b(\w+(?![\(])))(?!\w)/', 'T_VARIABLE_REFERENCE|T_VARIABLE_VALUE');
+		$this->lexer->add('/^(\+|\*|\\|\-)/', 'T_ASSIGNMENT_OPERATOR');
 		$this->lexer->add('/^(=)/', 'T_EQUALS');
 		$this->lexer->add('/^(;)/', 'T_EOL');
 
@@ -55,86 +56,120 @@ class Parser {
 					$variable_name = $tokens->findNext('T_VARIABLE_NAME');
 					$variable_value = $tokens->findNext('T_VARIABLE_VALUE');
 
-					$type = (explode('|', $variable_value->type))[0];
-					switch($type)
+					// WE CHECK IF THE NEXT ONE IS A LOGICAL OPERATOR SO IT CAN BE PARSED CORRECTLY
+					$tokens->setIndex($variable_value->index);
+					$operator = $tokens->next('T_WHITESPACE', 1);
+					if(in_array('T_ASSIGNMENT_OPERATOR', explode('|', $operator->type)))
 					{
-						case 'T_STRING':
-							$variable_value->match = strtr($variable_value->match, ['"' => '']);
-						break;
-						case 'T_INTEGER':
-							$variable_value->match = (int) $variable_value->match;
-						break;
-						case 'T_FLOAT':
-							$variable_value->match = (float) $variable_value->match;
-						break;
-						case 'T_BOOLEAN':
-							$variable_value->match = ($variable_value->match === 'true') ? true : false;
-						break;
-						case 'T_ARRAY':
-							$variable_value->match = json_decode($variable_value->match, true);
-							if(!is_array($variable_value->match))
-							{
-								throw new \Exception('Parse Error: Unable to parse array on line ' . $variable_value->line);
-							}
-						break;
-						case 'T_FUNCTION_RESULT':
-							preg_match('/^([a-z]+)/', $variable_value->match, $function_name_matches);
-							preg_match('/(\()([0-9a-z\,\ ]+)(\))/', $variable_value->match, $function_param_matches);
-							
+						$next = $tokens->next('T_WHITESPACE');
+						if($variable_value->type !== 'T_INTEGER|T_VARIABLE_VALUE' && $variable_value->type !== 'T_FLOAT|T_VARIABLE_VALUE')
+						{
+							throw new \Exception('Parse Error: Unexpected ' . $variable_value->match . ' on line ' . $variable_value->line);
+						}
+						if($next->type !== 'T_INTEGER|T_VARIABLE_VALUE' && $next->type !== 'T_FLOAT|T_VARIABLE_VALUE')
+						{
+							throw new \Exception('Parse Error: Unexpected ' . $next->match . ' on line ' . $variable_value->line);
+						}
 
-							$function_name = $function_name_matches[0];
-							if(!isset($this->functions[$function_name]))
-							{
-								throw new \Exception('RuntimeError: Call to undefined function ' . $function_name . ' on line ' . $variable_value->line);
-							}
+						switch($operator->match)
+						{
+							case '+':
+								$variable_value->match = $variable_value->match + $next->match;
+							break;
+							case '-':
+								$variable_value->match = $variable_value->match - $next->match;
+							break;
+							case '*':
+								$variable_value->match = $variable_value->match * $next->match;
+							break;
+							case '/':
+								$variable_value->match = $variable_value->match - $next->match;
+							break;
+						}
+					}
+					else
+					{
+						$type = (explode('|', $variable_value->type))[0];
+						switch($type)
+						{
+							case 'T_STRING':
+								$variable_value->match = strtr($variable_value->match, ['"' => '']);
+							break;
+							case 'T_INTEGER':
+								$variable_value->match = (integer) $variable_value->match;
+							break;
+							case 'T_FLOAT';
+								$variable_value->match = (float) $variable_value->match;
+							break;
+							case 'T_BOOLEAN':
+								$variable_value->match = ($variable_value->match === 'true') ? true : false;
+							break;
+							case 'T_ARRAY':
+								$variable_value->match = json_decode($variable_value->match, true);
+								if(!is_array($variable_value->match))
+								{
+									throw new \Exception('Parse Error: Unable to parse array on line ' . $variable_value->line);
+								}
+							break;
+							case 'T_FUNCTION_RESULT':
+								preg_match('/^([a-z]+)/', $variable_value->match, $function_name_matches);
+								preg_match('/(\()([0-9a-z\,\ ]+)(\))/', $variable_value->match, $function_param_matches);
+								
 
-							$function_params = @$function_param_matches[0];
-							if($function_params === null)
-							{
-								throw new \Exception('RuntimeError: Unable to parse function params for function ' . $function_name . ' on line ' . $variable_value->line);
-							}
+								$function_name = $function_name_matches[0];
+								if(!isset($this->functions[$function_name]))
+								{
+									throw new \Exception('RuntimeError: Call to undefined function ' . $function_name . ' on line ' . $variable_value->line);
+								}
 
-							$base_params = explode(',', str_replace(['(', ')'], '', $function_params));
-							$variable_value->match = call_user_func_array($this->functions[$function_name], array_map('trim', $base_params));
-						break;
-						case 'T_VARIABLE_REFERENCE':
-							$variable_ref = strtr($variable_value, ['&' => '']);
-							if(!isset($this->variables[$variable_ref]))
-							{
-								throw new \Exception('RuntimeError: Attempt to access undefined variable ' . $variable_ref . ' on line ' . $variable_value->line);
-							}
+								$function_params = @$function_param_matches[0];
+								if($function_params === null)
+								{
+									throw new \Exception('RuntimeError: Unable to parse function params for function ' . $function_name . ' on line ' . $variable_value->line);
+								}
 
-							$variable_value->match = $this->variables[$variable_ref];
-						break;
-						case 'T_NESTED_VARIABLE_REFERENCE':
-							$variable_ref = strtr($variable_value->match, ['&' => '']);
+								$base_params = explode(',', str_replace(['(', ')'], '', $function_params));
+								$variable_value->match = call_user_func_array($this->functions[$function_name], array_map('trim', $base_params));
+							break;
+							case 'T_VARIABLE_REFERENCE':
+								$variable_ref = strtr($variable_value, ['&' => '']);
+								if(!isset($this->variables[$variable_ref]))
+								{
+									throw new \Exception('RuntimeError: Attempt to access undefined variable ' . $variable_ref . ' on line ' . $variable_value->line);
+								}
 
-					        $current_value = $this->variables;
-					        $key_path = explode('.', $variable_ref);
-					        $value = null;
-					        for($i = 0; $i < count($key_path); $i++)
-					        {
-					        	$current_key = $key_path[$i];
-					        	if(!isset($current_value[$current_key]))
-					        	{
-					        		throw new \Exception('RuntimeError: Attempt to access undefined variable ' . $variable_ref . ' on line ' . $variable_value->line);
-					        	}
+								$variable_value->match = $this->variables[$variable_ref];
+							break;
+							case 'T_NESTED_VARIABLE_REFERENCE':
+								$variable_ref = strtr($variable_value->match, ['&' => '']);
 
-					            if(!is_array($current_value))
-					            {
-					                throw new \Exception('RuntimeError: Attempt to access undefined variable ' . $variable_ref . ' on line ' . $variable_value->line);
-					            }
+						        $current_value = $this->variables;
+						        $key_path = explode('.', $variable_ref);
+						        $value = null;
+						        for($i = 0; $i < count($key_path); $i++)
+						        {
+						        	$current_key = $key_path[$i];
+						        	if(!isset($current_value[$current_key]))
+						        	{
+						        		throw new \Exception('RuntimeError: Attempt to access undefined variable ' . $variable_ref . ' on line ' . $variable_value->line);
+						        	}
 
-					            $current_value = $current_value[$current_key];
-					        }
+						            if(!is_array($current_value))
+						            {
+						                throw new \Exception('RuntimeError: Attempt to access undefined variable ' . $variable_ref . ' on line ' . $variable_value->line);
+						            }
 
-					        if(is_null($current_value))
-					        {
-					        	throw new \Exception('RuntimeError: Attempt to access undefined variable ' . $variable_ref . ' on line ' . $variable_value->line);
-					        }
+						            $current_value = $current_value[$current_key];
+						        }
 
-					        $variable_value->match = $current_value;
-						break;
+						        if(is_null($current_value))
+						        {
+						        	throw new \Exception('RuntimeError: Attempt to access undefined variable ' . $variable_ref . ' on line ' . $variable_value->line);
+						        }
+
+						        $variable_value->match = $current_value;
+							break;
+						}
 					}
 
 					$this->variables[$variable_name->match] = $variable_value->match;

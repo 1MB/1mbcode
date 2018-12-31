@@ -39,3 +39,17 @@ var myFloat = 100.99;
 ```
 var myBool = true;
 ```
+
+#### Variable References
+
+You can reference a variable as the value of another variable, function parameter, etc with the `&` char e.g `&myVar`.
+
+#### Assignment Operators
+
+1mbcode supports standard assignment pperators `+`, `-`, `*`, `/`. You can use any of these operators on `integer`, `float`, or variable references. note: assignment operators have not yet been implemented on variable references
+
+#### Storing Function Results
+
+```
+var myFuncResult = fetch_url("https://google.com");
+```

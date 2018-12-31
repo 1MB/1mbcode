@@ -15,12 +15,18 @@ class TokenCollection {
 		$this->tokens = $tokens;
 	}
 
-	public function next()
+	public function next(string $skip = 'T_WHITESPACE', int $add = 0)
 	{
-		if(isset($this->tokens[$this->current]))
+		if(isset($this->tokens[$this->current + $add]))
 		{
-			$return = $this->tokens[$this->current];
-			$this->current += 1;
+			if(in_array($skip, explode('|', $this->tokens[$this->current + $add]->type)))
+			{
+				$this->current += $add > 0 ? $add : 1;
+				return $this->next();
+			}
+
+			$return = $this->tokens[$this->current + $add];
+			$this->current += $add > 0 ? $add : 1;
 			return $return;
 		}
 
@@ -47,6 +53,6 @@ class TokenCollection {
 
 	public function setIndex(int $index)
 	{
-		return $this->current = ($index - 1);
+		return $this->current = ($index + 1);
 	}
 }
