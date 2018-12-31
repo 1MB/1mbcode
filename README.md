@@ -1,6 +1,6 @@
 # 1mbcode
 
-1mbcode is a backend language written for [1mb.site](https://1mb.site). It gives basic backend functionally to developers in a sandboxed environment.
+1mbcode is a backend language written for [1mb.site](https://1mb.site). It gives basic backend functionality to developers in a sandboxed environment.
 
 # 1mbcode is still WIP, this version is not live on [1mb.site](https://1mb.site).
 
