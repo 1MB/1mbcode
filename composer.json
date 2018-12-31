@@ -1,0 +1,16 @@
+{
+    "name": "1mbsite/1mbcode",
+    "authors": [
+        {
+            "name": "Jake Casto",
+            "email": "jake@lynndigital.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "": ["src"]
+        }
+	},
+    "minimum-stability": "dev",
+    "require": {}
+}
