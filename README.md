@@ -8,7 +8,7 @@
 
 ### Variables
 
-1mbcode supports `array|string|integer|float` data types, below are examples for creating variables and assigning their value.
+1mbcode supports `array|string|integer|float|boolean` data types, below are examples for creating variables and assigning their value.
 
 #### Array
 
@@ -32,4 +32,10 @@ var myInteger = 100;
 
 ```
 var myFloat = 100.99;
+```
+
+#### Boolean
+
+```
+var myBool = true;
 ```

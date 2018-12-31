@@ -30,14 +30,15 @@ class Parser {
 		$this->lexer = new Lexer(explode(PHP_EOL, $source));
 	}
 
-	protected function parse()
+	public function parse()
 	{
 		$this->lexer->add('/^(var)/', 'T_VARIABLE_IDENTIFIER');
 		$this->lexer->add('/^( )/', 'T_WHITESPACE');
-		$this->lexer->add('/^(?![\ \;\=\"0-9\(\)]+)(\b(\w+(?![\(\.])))(?!\w)/', 'T_VARIABLE_NAME');
+		$this->lexer->add('/^(?!true)(?!false)(?![\ \;\=\"0-9\(\)]+)(\b(\w+(?![\(\.])))(?!\w)/', 'T_VARIABLE_NAME');
 		$this->lexer->add('/^("([^\\"]+|\\.)*")/', 'T_STRING|T_VARIABLE_VALUE');
 		$this->lexer->add('/^(?![\ \.]+)([0-9]+)$/', 'T_INTEGER|T_VARIABLE_VALUE');
 		$this->lexer->add('/^([0-9]*\.?[0-9]+)/', 'T_FLOAT|T_VARIABLE_VALUE');
+		$this->lexer->add('/^(true|false)+/', 'T_BOOLEAN|T_VARIABLE_VALUE');
 		$this->lexer->add('/^((\[|\{)[a-z,0-9\ \"\:]+(\]|\}))/', 'T_ARRAY|T_VARIABLE_VALUE');
 		$this->lexer->add('/^(((?![\ ])([a-z]+))\(([0-9a-z\,\ ])+\))/', 'T_FUNCTION_RESULT|T_VARIABLE_VALUE');
 		$this->lexer->add('/^((?![\ \=\"0-9\(\)]+)(\&)(\b(\w+(?![\(]))([\.]\w+)))/', 'T_NESTED_VARIABLE_REFERENCE|T_VARIABLE_VALUE');
@@ -65,6 +66,9 @@ class Parser {
 						break;
 						case 'T_FLOAT':
 							$variable_value->match = (float) $variable_value->match;
+						break;
+						case 'T_BOOLEAN':
+							$variable_value->match = ($variable_value->match === 'true') ? true : false;
 						break;
 						case 'T_ARRAY':
 							$variable_value->match = json_decode($variable_value->match, true);
@@ -138,5 +142,7 @@ class Parser {
 				break;
 			}
 		}
+
+		var_dump($this->variables);
 	}
 }
