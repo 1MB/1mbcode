@@ -28,6 +28,25 @@ class Parser {
 		$this->source = $source;
 		$this->functions = $functions;
 		$this->lexer = new Lexer(explode(PHP_EOL, $source));
+		$this->loadDefaultFunctions();
+	}
+
+	protected function loadDefaultFunctions()
+	{
+		$this->functions['print'] = function($mixed) { 
+			echo is_array($mixed) ? json_encode($mixed) : (string) $mixed;
+		};
+		$this->functions['dump'] = function($mixed) { 
+			var_dump($mixed);
+		};
+		$this->functions['get_url'] = function($url) { 
+			if(!filter_var($url, FILTER_VALIDATE_URL))
+			{
+				throw new \Exception('Invalid Type Exception: Expected argument one to function get_url to be valid url.');
+			}
+
+			return file_get_contents($url);
+		};
 	}
 
 	public function parse()

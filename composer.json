@@ -12,6 +12,5 @@
         }
 	},
     "minimum-stability": "dev",
-    "require": {},
-    "bin": ["vendor/autoload.php"]
+    "require": {}
 }
