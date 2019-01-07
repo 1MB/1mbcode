@@ -197,7 +197,10 @@ class Parser {
 				break;
 			}
 		}
-
-		// var_dump($this->variables);
 	}
+
+    public static function getVersion()
+    {
+        return '@git_commit_short@';
+    }
 }
