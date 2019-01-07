@@ -14,5 +14,13 @@
     "stub": true,
     "dump-autoload": true,
     "git-commit-short": "git_commit_short",
-    "shebang": null
+    "shebang": false,
+    "banner": [
+          "This file is part of the 1mbsite/1mbcode project.",
+          "",
+          "(c) Dalton Edwards",
+          "",
+          "This source file is subject to the MIT license that is bundled",
+          "with this source code in the file LICENSE."
+    ]
 }
