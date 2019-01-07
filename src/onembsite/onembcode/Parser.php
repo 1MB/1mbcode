@@ -62,7 +62,7 @@ class Parser {
 		$this->lexer->add('/^(((?![\ ])([a-z]+))\(([0-9a-z\,\ ])+\))/', 'T_FUNCTION_RESULT|T_VARIABLE_VALUE');
 		$this->lexer->add('/^((?![\ \=\"0-9\(\)]+)(\&)(\b(\w+(?![\(]))([\.]\w+)))/', 'T_NESTED_VARIABLE_REFERENCE|T_VARIABLE_VALUE');
 		$this->lexer->add('/^(?![\ \;\=\"0-9\(\)]+)(\&)(\b(\w+(?![\(]))\b)(?!\w)/', 'T_VARIABLE_REFERENCE|T_VARIABLE_VALUE');
-		$this->lexer->add('/^(\+|\*|\\|\-)/', 'T_ASSIGNMENT_OPERATOR');
+		$this->lexer->add('/^(\+|\*|\/|\-)/', 'T_ASSIGNMENT_OPERATOR');
 		$this->lexer->add('/^(=)/', 'T_EQUALS');
 		$this->lexer->add('/^(;)/', 'T_EOL');
 		$this->lexer->add('/^(((?![\ ])([a-z]+))\(([0-9a-z\,\ \"\&\{\}\_\-\+\*])+\));/', 'T_FUNCTION');
@@ -205,7 +205,7 @@ class Parser {
 						throw new \Exception('RuntimeError: Call to undefined function ' . $function_name . ' on line ' . $token->line);
 					}
 
-					preg_match('/([0-9a-z\,\ \&\{\}\"\+\-\*]+)/', substr($token->match, strlen($function_name)), $function_param_matches);
+					preg_match('/([0-9a-z\,\ \&\{\}\"\+\-\*\/]+)/', substr($token->match, strlen($function_name)), $function_param_matches);
 
 					$function_params = @$function_param_matches[0];
 					if($function_params === null)
@@ -232,7 +232,7 @@ class Parser {
 		$lexer->add('/^(((?![\ ])([a-z]+))\(([0-9a-z\,\ ])+\))/', 'T_FUNCTION_RESULT|T_VARIABLE_VALUE');
 		$lexer->add('/^((?![\ \=\"0-9\(\)]+)(\&)(\b(\w+(?![\(]))([\.]\w+)))/', 'T_NESTED_VARIABLE_REFERENCE|T_VARIABLE_VALUE');
 		$lexer->add('/^((?![\ \=\"0-9\(\)]+)(\&)(\b(\w+(?![\(])))\b)(?!\w)/', 'T_VARIABLE_REFERENCE|T_VARIABLE_VALUE');
-		$lexer->add('/^(\+|\*|\\|\-)/', 'T_ASSIGNMENT_OPERATOR');
+		$lexer->add('/^(\+|\*|\/|\-)/', 'T_ASSIGNMENT_OPERATOR');
 
 		$tokens = $lexer->run();
 		$values = [];
