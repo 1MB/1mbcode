@@ -17,4 +17,4 @@ $parser = new \onembsite\onembcode\Parser($script, $functions);
 $startTime = microtime(true);
 $parser->parse();
 echo "Compile time is: ". (microtime(true) - $startTime) ." seconds" . PHP_EOL;
-//output: Compile time is: 0.004626989364624 seconds (PHP 7.0, Windows 10 Pro Edition)
+//output: Compile time is: 0.004626989364624 seconds (PHP 7.3, Windows 10 Pro Edition)
