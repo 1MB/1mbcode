@@ -203,4 +203,9 @@ class Parser {
     {
         return '@git_commit_short@';
     }
+
+    public static function getVersionUrl()
+    {
+    	return 'https://github.com/1mbsite/1mbcode/commit/@git_commit_short@';
+    }
 }
