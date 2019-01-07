@@ -1,8 +1,5 @@
 {
-    "chmod": "0755",
-    "main": "vendor/autoload.php",
     "output": "releases/1mbcode.phar",
-
     "directories": ["src"],
     "finder": [
         {
@@ -11,8 +8,6 @@
             "in": "vendor"
          }
     ],
-    "stub": true,
-    "dump-autoload": true,
     "git-commit-short": "git_commit_short",
     "shebang": false,
     "banner": [
