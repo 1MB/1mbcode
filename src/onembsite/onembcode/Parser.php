@@ -57,6 +57,7 @@ class Parser {
 					$variable_value = $tokens->findNext('T_VARIABLE_VALUE');
 
 					// WE CHECK IF THE NEXT ONE IS A LOGICAL OPERATOR SO IT CAN BE PARSED CORRECTLY
+					// THIS CAUSES PERFORMANCE ISSUES, USING A FUNCTION FOR MATH IS FASTER?
 					$tokens->setIndex($variable_value->index);
 					$operator = $tokens->next('T_WHITESPACE', 1);
 					if(in_array('T_ASSIGNMENT_OPERATOR', explode('|', $operator->type)))
@@ -83,7 +84,7 @@ class Parser {
 								$variable_value->match = $variable_value->match * $next->match;
 							break;
 							case '/':
-								$variable_value->match = $variable_value->match - $next->match;
+								$variable_value->match = $variable_value->match / $next->match;
 							break;
 						}
 					}
@@ -178,6 +179,6 @@ class Parser {
 			}
 		}
 
-		var_dump($this->variables);
+		// var_dump($this->variables);
 	}
 }
