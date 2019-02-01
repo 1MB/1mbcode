@@ -1,5 +1,7 @@
 <?php
 
+	namespace onembsite\onembcode\functions;
+
 	class HelperFunctions {
 		 
 		public static function is_type($variable, $type) {

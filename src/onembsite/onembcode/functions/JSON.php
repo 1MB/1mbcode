@@ -1,5 +1,7 @@
 <?php
 
+	namespace onembsite\onembcode\functions;
+
 	class JSON {
 		public static function parse($json = "") {
 			if (!HelperFunctions::is_type($json, "string")) {

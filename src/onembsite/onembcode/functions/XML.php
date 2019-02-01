@@ -1,5 +1,7 @@
 <?php
 
+	namespace onembsite\onembcode\functions;
+
 	class XML {
 		public static function parse($xml = "") {
 			if (!HelperFunctions::is_type($xml, "string")) {

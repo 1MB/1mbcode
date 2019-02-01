@@ -1,5 +1,7 @@
 <?php
 
+	namespace onembsite\onembcode\functions;
+
 	class NativeFunctions {
 		
 		/**
