@@ -53,19 +53,19 @@ class Parser {
 			return file_get_contents($url);
 		};
 		$this->functions['sub'] = function() { 
-			return call_user_func_array('NativeFunctions::sub', func_get_args());
+			return call_user_func_array('onembsite\onembcode\functions\NativeFunctions::sub', func_get_args());
 		};
 		$this->functions['parse_json'] = function() { 
-			return call_user_func_array('JSON::parse', func_get_args());
+			return call_user_func_array('onembsite\onembcode\functions\JSON::parse', func_get_args());
 		};
 		$this->functions['create_json'] = function() { 
-			return call_user_func_array('JSON::create', func_get_args());
+			return call_user_func_array('onembsite\onembcode\functions\JSON::create', func_get_args());
 		};
 		$this->functions['parse_xml'] = function() { 
-			return call_user_func_array('XML::parse', func_get_args());
+			return call_user_func_array('onembsite\onembcode\functions\XML::parse', func_get_args());
 		};
 		$this->functions['create_xml'] = function() { 
-			return call_user_func_array('XML::create', func_get_args());
+			return call_user_func_array('onembsite\onembcode\functions\XML::create', func_get_args());
 		};
 	}
 
