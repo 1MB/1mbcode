@@ -1,5 +1,5 @@
 <?php
-require_once './vendor/autoload.php';
+require_once '../vendor/autoload.php';
 
 $total_time = 0;
 $startTime = microtime(true);
