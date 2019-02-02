@@ -52,40 +52,40 @@ class Parser {
 
 			return file_get_contents($url);
 		};
-		$this->functions['sub'] = function() { 
-			return call_user_func_array('NativeFunctions::sub', func_get_args());
+		$this->functions['sub'] = function($mixed, $start = 0, $end = -1) {
+			return NativeFunctions::sub($mixed, $start, $end);
 		};
-		$this->functions['parse_json'] = function() { 
-			return call_user_func_array('JSON::parse', func_get_args());
+		$this->functions['parse_json'] = function($mixed) { 
+			return JSON::parse($mixed);
 		};
-		$this->functions['create_json'] = function() { 
-			return call_user_func_array('JSON::create', func_get_args());
+		$this->functions['create_json'] = function($mixed, $prettify = false) { 
+			return JSON::parse($mixed, $prettify);
 		};
-		$this->functions['parse_xml'] = function() { 
-			return call_user_func_array('XML::parse', func_get_args());
+		$this->functions['parse_xml'] = function($mixed) { 
+			return XML::parse($mixed);
 		};
-		$this->functions['create_xml'] = function() { 
-			return call_user_func_array('XML::create', func_get_args());
+		$this->functions['create_xml'] = function($mixed) {
+			return XML::parse($mixed);
 		};
 	}
 
 	public function parse()
 	{
-		$this->lexer->add('/^(var)/', 'T_VARIABLE_IDENTIFIER');
+		$this->lexer->add('/^(var)/i', 'T_VARIABLE_IDENTIFIER');
 		$this->lexer->add('/^( )/', 'T_WHITESPACE');
 		$this->lexer->add('/^(?!true)(?!false)(?![\ \;\=\"0-9\(\)]+)(\b(\w+(?![\(\.])))(?!\w)/', 'T_VARIABLE_NAME');
 		$this->lexer->add('/^("([^\\"]+|\\.)*")/', 'T_STRING|T_VARIABLE_VALUE');
 		$this->lexer->add('/^(?![\ \.]+)([0-9]+)$/', 'T_INTEGER|T_VARIABLE_VALUE');
 		$this->lexer->add('/^([0-9]*\.?[0-9]+)/', 'T_FLOAT|T_VARIABLE_VALUE');
 		$this->lexer->add('/^(true|false)+/', 'T_BOOLEAN|T_VARIABLE_VALUE');
-		$this->lexer->add('/^((\[|\{)[a-z,0-9\ \"\:]+(\]|\}))/', 'T_ARRAY|T_VARIABLE_VALUE');
-		$this->lexer->add('/^(((?![\ ])([a-z]+))\(([0-9a-z\,\ ])+\))/', 'T_FUNCTION_RESULT|T_VARIABLE_VALUE');
+		$this->lexer->add('/^((\[|\{)[a-z,0-9\ \"\:]+(\]|\}))/i', 'T_ARRAY|T_VARIABLE_VALUE');
+		$this->lexer->add('/^(((?![\ ])([a-z]+))\(([0-9a-z\,\ \&\{\}\:\"\+\-\*\/])+\))/i', 'T_FUNCTION_RESULT|T_VARIABLE_VALUE');
 		$this->lexer->add('/^((?![\ \=\"0-9\(\)]+)(\&)(\b(\w+(?![\(]))([\.]\w+)))/', 'T_NESTED_VARIABLE_REFERENCE|T_VARIABLE_VALUE');
 		$this->lexer->add('/^(?![\ \;\=\"0-9\(\)]+)(\&)(\b(\w+(?![\(]))\b)(?!\w)/', 'T_VARIABLE_REFERENCE|T_VARIABLE_VALUE');
 		$this->lexer->add('/^(\+|\*|\/|\-)/', 'T_ASSIGNMENT_OPERATOR');
 		$this->lexer->add('/^(=)/', 'T_EQUALS');
 		$this->lexer->add('/^(;)/', 'T_EOL');
-		$this->lexer->add('/^(((?![\ ])([a-z]+))\(([0-9a-z\,\ \"\&\{\}\_\-\+\*])+\));/', 'T_FUNCTION');
+		$this->lexer->add('/^(((?![\ ])([a-z]+))\(([0-9a-z\,\ \"\&\{\}\_\-\+\*])+\));/i', 'T_FUNCTION');
 
 		$tokens = $this->lexer->run();
 		while(($token = $tokens->next()) && $token !== null)
@@ -153,8 +153,8 @@ class Parser {
 								}
 							break;
 							case 'T_FUNCTION_RESULT':
-								preg_match('/^([a-z]+)/', $variable_value->match, $function_name_matches);
-								preg_match('/(\()([0-9a-z\,\ ]+)(\))/', $variable_value->match, $function_param_matches);
+								preg_match('/^([a-z]+)/i', $variable_value->match, $function_name_matches);
+								preg_match('/(\(([0-9a-z\,\ \&\"\+\-\*\/]+)\))/i', $variable_value->match, $function_param_matches);
 								
 
 								$function_name = $function_name_matches[0];
@@ -170,7 +170,8 @@ class Parser {
 								}
 
 								$base_params = explode(',', str_replace(['(', ')'], '', $function_params));
-								$variable_value->match = call_user_func_array($this->functions[$function_name], array_map('trim', $base_params));
+								$params = $this->parseValuesFromArrayForFunctionParams($base_params);
+								$variable_value->match = call_user_func_array($this->functions[$function_name], $params);
 							break;
 							case 'T_VARIABLE_REFERENCE':
 								$variable_ref = strtr($variable_value->match, ['&' => '']);
@@ -217,7 +218,7 @@ class Parser {
 					$tokens->setIndex($variable_value->index);
 				break;
 				case 'T_FUNCTION':
-					preg_match('/^([a-z]+)/', $token->match, $function_name_matches);
+					preg_match('/^([a-z]+)/i', $token->match, $function_name_matches);
 					
 					$function_name = $function_name_matches[0];
 					if(!isset($this->functions[$function_name]))
@@ -225,7 +226,7 @@ class Parser {
 						throw new \Exception('RuntimeError: Call to undefined function ' . $function_name . ' on line ' . $token->line);
 					}
 
-					preg_match('/([0-9a-z\,\ \&\{\}\"\+\-\*\/]+)/', substr($token->match, strlen($function_name)), $function_param_matches);
+					preg_match('/([0-9a-z\,\ \&\{\}\:\"\+\-\*\/]+)/i', substr($token->match, strlen($function_name)), $function_param_matches);
 
 					$function_params = @$function_param_matches[0];
 					if($function_params === null)
@@ -234,6 +235,7 @@ class Parser {
 					}
 
 					$params = $this->parseValuesFromArrayForFunctionParams(explode(',', str_replace(['(', ')'], '', $function_params)));
+					
 					call_user_func_array($this->functions[$function_name], $params);
 				break;
 			}
@@ -249,7 +251,7 @@ class Parser {
 		$lexer->add('/^(?![\ \.]+)([0-9]+)$/', 'T_INTEGER|T_VARIABLE_VALUE');
 		$lexer->add('/^([0-9]*\.?[0-9]+)/', 'T_FLOAT|T_VARIABLE_VALUE');
 		$lexer->add('/^(true|false)+/', 'T_BOOLEAN|T_VARIABLE_VALUE');
-		$lexer->add('/^(((?![\ ])([a-z]+))\(([0-9a-z\,\ ])+\))/', 'T_FUNCTION_RESULT|T_VARIABLE_VALUE');
+		$lexer->add('/^(((?![\ ])([a-z]+))\(([0-9a-z\,\ ])+\))/i', 'T_FUNCTION_RESULT|T_VARIABLE_VALUE');
 		$lexer->add('/^((?![\ \=\"0-9\(\)]+)(\&)(\b(\w+(?![\(]))([\.]\w+)))/', 'T_NESTED_VARIABLE_REFERENCE|T_VARIABLE_VALUE');
 		$lexer->add('/^((?![\ \=\"0-9\(\)]+)(\&)(\b(\w+(?![\(])))\b)(?!\w)/', 'T_VARIABLE_REFERENCE|T_VARIABLE_VALUE');
 		$lexer->add('/^(\+|\*|\/|\-)/', 'T_ASSIGNMENT_OPERATOR');
@@ -317,8 +319,8 @@ class Parser {
 						}
 					break;
 					case 'T_FUNCTION_RESULT':
-						preg_match('/^([a-z]+)/', $variable_value->match, $function_name_matches);
-						preg_match('/(\()([0-9a-z\,\ ]+)(\))/', $variable_value->match, $function_param_matches);
+						preg_match('/^([a-z]+)/i', $variable_value->match, $function_name_matches);
+						preg_match('/(\()([0-9a-z\,\ ]+)(\))/i', $variable_value->match, $function_param_matches);
 						
 
 						$function_name = $function_name_matches[0];
